@@ -1,0 +1,297 @@
+@import url('https://fonts.googleapis.com/css2?family=Bangers&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 40 20% 98%;
+    --foreground: 220 20% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 10%;
+
+    --primary: 220 90% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 40 30% 96%;
+    --secondary-foreground: 220 20% 10%;
+
+    --muted: 40 20% 94%;
+    --muted-foreground: 220 10% 40%;
+
+    --accent: 350 85% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 85%;
+    --input: 220 15% 90%;
+    --ring: 220 90% 50%;
+
+    --radius: 1rem;
+
+    /* Comic-inspired Inkvia tokens */
+    --inkvia-red: 350 85% 55%;
+    --inkvia-blue: 220 90% 50%;
+    --inkvia-yellow: 45 100% 55%;
+    --inkvia-mint: 165 70% 50%;
+    --inkvia-ink: 220 20% 10%;
+    --inkvia-paper: 40 20% 98%;
+    
+    /* Comic effects */
+    --comic-shadow: 4px 4px 0px hsl(220 20% 10%);
+    --comic-shadow-sm: 2px 2px 0px hsl(220 20% 10%);
+    --comic-shadow-lg: 6px 6px 0px hsl(220 20% 10%);
+    --comic-glow: 0 0 20px hsl(220 90% 50% / 0.3);
+  }
+
+  .dark {
+    --background: 220 20% 8%;
+    --foreground: 40 20% 98%;
+    --card: 220 20% 12%;
+    --card-foreground: 40 20% 98%;
+    --popover: 220 20% 12%;
+    --popover-foreground: 40 20% 98%;
+    --primary: 220 90% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 20% 15%;
+    --secondary-foreground: 40 20% 98%;
+    --muted: 220 20% 18%;
+    --muted-foreground: 220 10% 60%;
+    --accent: 350 85% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 62.8% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 15% 25%;
+    --input: 220 15% 20%;
+    --ring: 220 90% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+
+  ::selection {
+    @apply bg-primary text-primary-foreground;
+  }
+}
+
+@layer components {
+  /* Comic-style panel */
+  .comic-panel {
+    @apply bg-card rounded-2xl border-[3px] border-foreground relative;
+    box-shadow: var(--comic-shadow);
+  }
+
+  .comic-panel-sm {
+    @apply bg-card rounded-xl border-2 border-foreground relative;
+    box-shadow: var(--comic-shadow-sm);
+  }
+
+  /* Ink outline effect */
+  .ink-outline {
+    @apply border-[3px] border-foreground;
+    box-shadow: var(--comic-shadow);
+  }
+
+  .ink-outline-sm {
+    @apply border-2 border-foreground;
+    box-shadow: var(--comic-shadow-sm);
+  }
+
+  /* Sticker style */
+  .sticker {
+    @apply inline-block px-4 py-2 rounded-full font-bold border-2 border-foreground transform rotate-[-2deg];
+    box-shadow: var(--comic-shadow-sm);
+  }
+
+  /* Speech bubble */
+  .speech-bubble {
+    @apply relative bg-card rounded-2xl border-[3px] border-foreground p-4;
+    box-shadow: var(--comic-shadow);
+  }
+
+  .speech-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -20px;
+    left: 30px;
+    border-width: 20px 15px 0;
+    border-style: solid;
+    border-color: hsl(var(--foreground)) transparent transparent transparent;
+  }
+
+  .speech-bubble::before {
+    content: '';
+    position: absolute;
+    bottom: -14px;
+    left: 33px;
+    border-width: 16px 12px 0;
+    border-style: solid;
+    border-color: hsl(var(--card)) transparent transparent transparent;
+    z-index: 1;
+  }
+
+  /* Halftone texture overlay */
+  .halftone {
+    position: relative;
+  }
+
+  .halftone::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, hsl(var(--foreground) / 0.05) 1px, transparent 1px);
+    background-size: 4px 4px;
+    pointer-events: none;
+    border-radius: inherit;
+  }
+
+  /* Comic heading font */
+  .comic-heading {
+    font-family: 'Bangers', cursive;
+    letter-spacing: 0.05em;
+  }
+
+  /* Floating animation */
+  .float-element {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  /* Pop effect on hover */
+  .pop-hover {
+    @apply transition-all duration-200 ease-out;
+  }
+
+  .pop-hover:hover {
+    transform: scale(1.05) translateY(-4px);
+    box-shadow: var(--comic-shadow-lg);
+  }
+
+  /* Stamp style */
+  .stamp {
+    @apply inline-block px-3 py-1 font-bold uppercase tracking-wider border-2 border-current transform rotate-[-3deg];
+  }
+}
+
+@layer utilities {
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-float-delayed {
+    animation: float 6s ease-in-out infinite;
+    animation-delay: 2s;
+  }
+
+  .animate-bounce-subtle {
+    animation: bounce-subtle 2s ease-in-out infinite;
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.6s ease-out;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-out;
+  }
+
+  .animate-wiggle {
+    animation: wiggle 0.5s ease-in-out;
+  }
+
+  /* Comic accent colors */
+  .bg-comic-red { background-color: hsl(var(--inkvia-red)); }
+  .bg-comic-blue { background-color: hsl(var(--inkvia-blue)); }
+  .bg-comic-yellow { background-color: hsl(var(--inkvia-yellow)); }
+  .bg-comic-mint { background-color: hsl(var(--inkvia-mint)); }
+  
+  .text-comic-red { color: hsl(var(--inkvia-red)); }
+  .text-comic-blue { color: hsl(var(--inkvia-blue)); }
+  .text-comic-yellow { color: hsl(var(--inkvia-yellow)); }
+  .text-comic-mint { color: hsl(var(--inkvia-mint)); }
+
+  .border-comic-red { border-color: hsl(var(--inkvia-red)); }
+  .border-comic-blue { border-color: hsl(var(--inkvia-blue)); }
+  .border-comic-yellow { border-color: hsl(var(--inkvia-yellow)); }
+  .border-comic-mint { border-color: hsl(var(--inkvia-mint)); }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-15px) rotate(2deg);
+  }
+}
+
+@keyframes bounce-subtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes wiggle {
+  0%, 100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--foreground) / 0.2);
+  border-radius: 5px;
+  border: 2px solid hsl(var(--background));
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--foreground) / 0.3);
+}
