@@ -1,19 +1,45 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Phone, CreditCard, Home, School } from 'lucide-react';
+import {
+  ArrowLeft,
+  MapPin,
+  Phone,
+  CreditCard,
+  Home,
+  School,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 type DeliveryOption = 'home' | 'college';
+
+const RAZORPAY_LINK = 'https://rzp.io/rzp/MrGTngvM';
+
+/* 🔥 CRITICAL FIX:
+   Normalize cart items so NO undefined values ever reach Firestore
+*/
+const normalizeCartItems = (items: any[]) => {
+  return items.map((item) => ({
+    productId: item.id,
+    name: item.name ?? '',
+    price: item.price,
+    quantity: item.quantity ?? 1,
+    image: item.image ?? '',
+    size: item.size ?? null,
+  }));
+};
 
 const CheckoutPage: React.FC = () => {
   const { items, totalPrice, clearCart } = useCart();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [deliveryOption, setDeliveryOption] = useState<DeliveryOption>('home');
+  const [deliveryOption, setDeliveryOption] =
+    useState<DeliveryOption>('home');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -31,7 +57,7 @@ const CheckoutPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (items.length === 0) {
       toast.error('Your cart is empty');
       return;
@@ -39,15 +65,46 @@ const CheckoutPage: React.FC = () => {
 
     setIsSubmitting(true);
 
-    // Simulate order processing
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      // ✅ Normalize cart items (NO undefined)
+      const safeItems = normalizeCartItems(items);
 
-    // Here you would integrate PhonePe payment
-    toast.success('Order placed successfully! Payment integration coming soon.');
-    clearCart();
-    navigate('/');
-    
-    setIsSubmitting(false);
+      // ✅ Build delivery details safely
+      const deliveryDetails: any = {
+        name: formData.name,
+        phone: formData.phone,
+      };
+
+      if (deliveryOption === 'home') {
+        deliveryDetails.address = formData.address;
+        deliveryDetails.city = formData.city;
+        deliveryDetails.pincode = formData.pincode;
+      } else {
+        deliveryDetails.collegeName = formData.collegeName;
+        deliveryDetails.collegeAddress = formData.collegeAddress;
+      }
+
+      // ✅ Final Firestore-safe order payload
+      const orderRef = await addDoc(collection(db, 'orders'), {
+        items: safeItems,
+        totalAmount: totalPrice,
+        deliveryOption,
+        deliveryDetails,
+        status: 'pending',
+        createdAt: serverTimestamp(),
+      });
+
+      // ✅ Redirect to Razorpay with dynamic amount
+      const amountInPaise = totalPrice * 100;
+      const paymentUrl = `${RAZORPAY_LINK}?amount=${amountInPaise}&notes[orderId]=${orderRef.id}`;
+
+      clearCart();
+      window.location.href = paymentUrl;
+    } catch (error) {
+      console.error('ORDER ERROR:', error);
+      toast.error('Failed to place order. Please try again.');
+      setIsSubmitting(false);
+    }
   };
 
   if (items.length === 0) {
@@ -281,7 +338,7 @@ const CheckoutPage: React.FC = () => {
             </Button>
 
             <p className="text-center text-sm text-muted-foreground">
-              Secure payment powered by PhonePe
+              Secure payment powered by Razorpay
             </p>
           </form>
         </div>
