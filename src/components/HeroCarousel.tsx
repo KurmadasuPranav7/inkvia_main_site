@@ -159,7 +159,7 @@ const HeroCarousel: React.FC = () => {
       </div>
 
       {/* Navigation Arrows */}
-      <button
+      {/* <button
         onClick={prevSlide}
         className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 w-12 h-12 bg-card border-4 border-foreground rounded-full flex items-center justify-center shadow-comic hover:shadow-comic-lg hover:-translate-y-1/2 hover:scale-110 transition-all z-20"
         aria-label="Previous slide"
@@ -172,7 +172,7 @@ const HeroCarousel: React.FC = () => {
         aria-label="Next slide"
       >
         <ChevronRight className="w-6 h-6" />
-      </button>
+      </button> */}
 
       {/* Dots Navigation */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 z-20">

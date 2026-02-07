@@ -1,7 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Instagram, Mail, Phone } from 'lucide-react';
-import Logo from './Logo';
+import Logo from '../assets/tm-inkvia.png';
+import ScrollToTop from './ScrollToTop';
+
 
 const Footer: React.FC = () => {
   return (
@@ -10,7 +12,7 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
           {/* Brand */}
           <div className="lg:col-span-2">
-            <Logo />
+            <img src={Logo} className='w-20'/>
             <p className="mt-4 text-muted-foreground max-w-md">
               Design. Merch. Creative Impact. We craft premium products and viral content
               that makes your brand unforgettable.
@@ -43,6 +45,7 @@ const Footer: React.FC = () => {
           <div>
             <h4 className="font-semibold text-lg mb-4">Quick Links</h4>
             <ul className="space-y-3">
+              <ScrollToTop/>
               {[
                 { name: 'Shop', path: '/shop' },
                 { name: 'About Us', path: '/about' },

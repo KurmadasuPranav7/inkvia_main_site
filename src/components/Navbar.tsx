@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Logo from './Logo';
+import Logo from '../assets/inkvia.png';
 import { useCart } from '@/contexts/CartContext';
 
 const Navbar: React.FC = () => {
@@ -58,7 +58,7 @@ const Navbar: React.FC = () => {
 
           {/* Centered Logo */}
           <Link to="/" className="absolute left-1/2 -translate-x-1/2">
-            <Logo />
+            <img src={Logo} className='w-20'/>
           </Link>
 
           {/* Right Navigation - Desktop */}
