@@ -18,11 +18,6 @@ import { db } from '@/lib/firebase';
 
 type DeliveryOption = 'home' | 'college';
 
-const RAZORPAY_LINK = 'https://rzp.io/rzp/MrGTngvM';
-
-/* 🔥 CRITICAL FIX:
-   Normalize cart items so NO undefined values ever reach Firestore
-*/
 const normalizeCartItems = (items: any[]) => {
   return items.map((item) => ({
     productId: item.id,
@@ -33,6 +28,11 @@ const normalizeCartItems = (items: any[]) => {
     size: item.size ?? null,
   }));
 };
+
+const CREATE_ORDER_URL =
+  'https://us-central1-inkvia-b31c1.cloudfunctions.net/createRazorpayOrder';
+const VERIFY_PAYMENT_URL =
+  'https://us-central1-inkvia-b31c1.cloudfunctions.net/verifyPayment';
 
 const CheckoutPage: React.FC = () => {
   const { items, totalPrice, clearCart } = useCart();
@@ -55,6 +55,43 @@ const CheckoutPage: React.FC = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+   const openRazorpay = async (orderId: string) => {
+    const res = await fetch(CREATE_ORDER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId }),
+    });
+
+    const razorpayOrder = await res.json();
+
+    const options = {
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+      amount: razorpayOrder.amount, // ✅ pre-filled
+      currency: 'INR',
+      name: 'INKVIA',
+      description: 'Order Payment',
+      order_id: razorpayOrder.id,
+
+      handler: async (response: any) => {
+        await fetch(VERIFY_PAYMENT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...response,
+            receipt: orderId,
+          }),
+        });
+
+        toast.success('Payment successful!');
+        clearCart();
+        navigate('/');
+      },
+    };
+
+    const rzp = new (window as any).Razorpay(options);
+    rzp.open();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -66,27 +103,25 @@ const CheckoutPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // ✅ Normalize cart items (NO undefined)
-      const safeItems = normalizeCartItems(items);
+      const deliveryDetails =
+        deliveryOption === 'home'
+          ? {
+              name: formData.name,
+              phone: formData.phone,
+              address: formData.address,
+              city: formData.city,
+              pincode: formData.pincode,
+            }
+          : {
+              name: formData.name,
+              phone: formData.phone,
+              collegeName: formData.collegeName,
+              collegeAddress: formData.collegeAddress,
+            };
 
-      // ✅ Build delivery details safely
-      const deliveryDetails: any = {
-        name: formData.name,
-        phone: formData.phone,
-      };
-
-      if (deliveryOption === 'home') {
-        deliveryDetails.address = formData.address;
-        deliveryDetails.city = formData.city;
-        deliveryDetails.pincode = formData.pincode;
-      } else {
-        deliveryDetails.collegeName = formData.collegeName;
-        deliveryDetails.collegeAddress = formData.collegeAddress;
-      }
-
-      // ✅ Final Firestore-safe order payload
+      // 1️⃣ Create Firestore order (pending)
       const orderRef = await addDoc(collection(db, 'orders'), {
-        items: safeItems,
+        items: normalizeCartItems(items),
         totalAmount: totalPrice,
         deliveryOption,
         deliveryDetails,
@@ -94,18 +129,15 @@ const CheckoutPage: React.FC = () => {
         createdAt: serverTimestamp(),
       });
 
-      // ✅ Redirect to Razorpay with dynamic amount
-      const amountInPaise = totalPrice * 100;
-      const paymentUrl = `${RAZORPAY_LINK}?amount=${amountInPaise}&notes[orderId]=${orderRef.id}`;
-
-      clearCart();
-      window.location.href = paymentUrl;
-    } catch (error) {
-      console.error('ORDER ERROR:', error);
-      toast.error('Failed to place order. Please try again.');
+      // 2️⃣ Open Razorpay
+      await openRazorpay(orderRef.id);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to place order');
       setIsSubmitting(false);
     }
   };
+
 
   if (items.length === 0) {
     return (
