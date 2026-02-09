@@ -44,11 +44,12 @@ const CheckoutPage: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
+    email: '',
     address: '',
     city: '',
     pincode: '',
-    collegeName: '',
-    collegeAddress: '',
+    collegeName: 'VNRVJIET',
+    collegeAddress: 'VNRVJIET, Bachupally, Hyderabad',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,6 +87,14 @@ const CheckoutPage: React.FC = () => {
         clearCart();
         navigate('/');
       },
+
+      modal: {
+        ondismiss: () => {
+          // ✅ USER CLOSED PAYMENT POPUP
+          toast.info('Payment cancelled');
+          setIsSubmitting(false);
+        },
+      },
     };
 
     const rzp = new (window as any).Razorpay(options);
@@ -108,6 +117,7 @@ const CheckoutPage: React.FC = () => {
           ? {
               name: formData.name,
               phone: formData.phone,
+              email: formData.email,
               address: formData.address,
               city: formData.city,
               pincode: formData.pincode,
@@ -115,14 +125,17 @@ const CheckoutPage: React.FC = () => {
           : {
               name: formData.name,
               phone: formData.phone,
+              email: formData.email,
               collegeName: formData.collegeName,
               collegeAddress: formData.collegeAddress,
             };
 
+      const shippingCost = deliveryOption === 'home' && totalPrice < 299 ? 50 : 0;
+      const totalPriceWithShipping = totalPrice + shippingCost;
       // 1️⃣ Create Firestore order (pending)
       const orderRef = await addDoc(collection(db, 'orders'), {
         items: normalizeCartItems(items),
-        totalAmount: totalPrice,
+        totalAmount: totalPriceWithShipping,
         deliveryOption,
         deliveryDetails,
         status: 'pending',
@@ -184,12 +197,12 @@ const CheckoutPage: React.FC = () => {
                   <div className="w-16 h-16 rounded-lg overflow-hidden border-2 border-foreground flex-shrink-0">
                     <img
                       src={item.image}
-                      alt={item.name}
+                      alt={item.title}
                       className="w-full h-full object-cover"
                     />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-bold text-sm text-foreground">{item.name}</h3>
+                    <h3 className="font-bold text-sm text-foreground">{item.title}</h3>
                     <p className="text-muted-foreground text-sm">
                       Qty: {item.quantity}
                     </p>
@@ -207,7 +220,11 @@ const CheckoutPage: React.FC = () => {
               </div>
               <div className="flex items-center justify-between text-sm mt-2">
                 <span className="text-foreground/80">Shipping</span>
-                <span className="sticker bg-comic-mint text-foreground text-xs py-1 px-2">FREE</span>
+                {(deliveryOption === 'home' && totalPrice < 299) ? (
+                  <span className="sticker bg-comic-red text-foreground text-xs py-1 px-2">₹50</span>
+                ) :( 
+                  <span className="sticker bg-comic-mint text-foreground text-xs py-1 px-2">FREE</span>
+                )}
               </div>
               <div className="flex items-center justify-between text-xl font-bold mt-4 pt-4 border-t-2 border-foreground">
                 <span>Total</span>
@@ -286,6 +303,23 @@ const CheckoutPage: React.FC = () => {
                   />
                 </div>
 
+                <div>
+                  <Label htmlFor="email" className="font-bold flex items-center gap-2">
+                    <Phone className="w-4 h-4" />
+                    E-mail
+                  </Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="example@gmail.com"
+                    required
+                    className="mt-1 border-2 border-foreground"
+                  />
+                </div>
+
                 {deliveryOption === 'home' ? (
                   <>
                     <div>
@@ -339,6 +373,7 @@ const CheckoutPage: React.FC = () => {
                         onChange={handleChange}
                         placeholder="Your college name"
                         required
+                        disabled
                         className="mt-1 border-2 border-foreground"
                       />
                     </div>
@@ -351,6 +386,7 @@ const CheckoutPage: React.FC = () => {
                         onChange={handleChange}
                         placeholder="College address or city"
                         required
+                        disabled
                         className="mt-1 border-2 border-foreground"
                       />
                     </div>

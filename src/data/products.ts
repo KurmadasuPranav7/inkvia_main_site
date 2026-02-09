@@ -12,6 +12,7 @@ export interface Product {
   image: string;
   category: ProductCategory;
   description?: string;
+  isAvailable?: boolean;
 }
 
 export const products: Product[] = [
