@@ -59,11 +59,11 @@ const CartPanel: React.FC = () => {
                 >
                   <img
                     src={item.image}
-                    alt={item.name}
+                    alt={item.title}
                     className="w-20 h-20 object-cover rounded-lg border-2 border-foreground"
                   />
                   <div className="flex-1">
-                    <h3 className="font-bold text-foreground">{item.name}</h3>
+                    <h3 className="font-bold text-foreground">{item.title}</h3>
                     <p className="font-comic text-lg text-primary">₹{item.price.toLocaleString()}</p>
                     <div className="flex items-center gap-2 mt-2">
                       <button

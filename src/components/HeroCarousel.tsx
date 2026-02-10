@@ -102,7 +102,7 @@ const HeroCarousel: React.FC = () => {
       <div className="absolute bottom-20 left-1/4 w-24 h-24 bg-comic-mint rounded-2xl border-4 border-foreground opacity-60 animate-float rotate-[-8deg] shadow-comic flex items-center justify-center">
         <span className="text-3xl">🎨</span>
       </div>
-      <div className="absolute bottom-1/3 right-1/4 w-12 h-12 bg-comic-blue rounded-full border-4 border-foreground opacity-70 animate-float-delayed shadow-comic flex items-center justify-center">
+      <div className="hidden md:flex absolute bottom-1/3 right-1/4 w-12 h-12 bg-comic-blue rounded-full border-4 border-foreground opacity-70 animate-float-delayed shadow-comic flex items-center justify-center">
         <span className="text-lg">✨</span>
       </div>
       
@@ -113,10 +113,10 @@ const HeroCarousel: React.FC = () => {
       <div className="absolute bottom-1/3 right-0 w-56 h-0.5 bg-gradient-to-l from-comic-mint to-transparent opacity-30 rotate-6" />
 
       {/* Sticker decorations */}
-      <div className="absolute top-20 right-10 md:right-32 sticker bg-comic-yellow text-foreground text-xs md:text-sm z-10 shadow-comic">
+      <div className="hidden md:flex absolute top-20 right-10 md:right-32 sticker bg-comic-yellow text-foreground text-xs md:text-sm z-10 shadow-comic">
         NEW DROP! 🔥
       </div>
-      <div className="absolute bottom-32 left-10 md:left-20 sticker bg-comic-mint text-foreground text-xs md:text-sm rotate-[5deg] z-10 shadow-comic">
+      <div className="hidden md:flex absolute bottom-32 left-10 md:left-20 sticker bg-comic-mint text-foreground text-xs md:text-sm rotate-[5deg] z-10 shadow-comic">
         LIMITED EDITION
       </div>
       <div className="absolute top-1/2 right-5 md:right-16 sticker bg-comic-red text-white text-xs rotate-[-8deg] z-10 shadow-comic hidden md:block">
