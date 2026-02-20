@@ -62,7 +62,7 @@ exports.createRazorpayOrder = onRequest(
 exports.verifyPayment = onRequest(
   {
     secrets: [RAZORPAY_KEY_SECRET],
-    cors: true, // ✅ THIS LINE FIXES CORS
+    cors: true,
   },
   async (req, res) => {
     try {
@@ -88,10 +88,58 @@ exports.verifyPayment = onRequest(
         return res.status(400).json({ status: 'failed' });
       }
 
-      await db.collection('orders').doc(receipt).update({
-        status: 'paid',
-        paymentId: razorpay_payment_id,
-        paidAt: admin.firestore.FieldValue.serverTimestamp(),
+      const orderRef = db.collection('orders').doc(receipt);
+      const orderDoc = await orderRef.get();
+
+      if (!orderDoc.exists) {
+        return res.status(404).json({ error: 'Order not found' });
+      }
+
+      const orderData = orderDoc.data();
+      const couponCode = orderData.couponCode;
+
+      await db.runTransaction(async (transaction) => {
+        // 1️⃣ Update Order to Paid
+        transaction.update(orderRef, {
+          status: 'paid',
+          paymentId: razorpay_payment_id,
+          paidAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        // 2️⃣ If Coupon Exists → Validate & Increment
+        if (couponCode) {
+          const couponRef = db.collection('coupons').doc(couponCode);
+          const couponSnap = await transaction.get(couponRef);
+
+          if (!couponSnap.exists) {
+            throw new Error('Coupon not found');
+          }
+
+          const couponData = couponSnap.data();
+
+          // Check usage limit again (important for safety)
+          if (
+            couponData.usageLimit &&
+            couponData.usedCount >= couponData.usageLimit
+          ) {
+            throw new Error('Coupon usage exceeded');
+          }
+
+          // Increment usedCount
+          transaction.update(couponRef, {
+            usedCount: admin.firestore.FieldValue.increment(1),
+          });
+
+          // Optional: auto-disable coupon when limit reached
+          if (
+            couponData.usageLimit &&
+            couponData.usedCount + 1 >= couponData.usageLimit
+          ) {
+            transaction.update(couponRef, {
+              isActive: false,
+            });
+          }
+        }
       });
 
       res.json({ status: 'success' });
