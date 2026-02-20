@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import ProductCard from '@/components/ProductCard';
 import { fetchAllProducts } from '@/lib/FetchProducts';
-import { Product, ProductCategory } from '@/types/Product';
+import { Product, ProductCategory } from '@/data/products';
 import { Grid2X2, Grid3X3, LayoutGrid } from 'lucide-react';
 
 type GridLayout = 2 | 3 | 4;
@@ -25,8 +25,16 @@ const ShopPage: React.FC = () => {
       .finally(() => setLoading(false));
   }, []);
 
+  // 🔥 Normalize category in case Firestore has "poster" instead of "posters"
+  const normalizeCategory = (category: string): ProductCategory => {
+    if (category === 'poster') return 'posters';
+    if (category === 'sticker') return 'stickers';
+    if (category === 'merch') return 'merch';
+    return category as ProductCategory;
+  };
+
   const filteredProducts = products.filter(
-    p => p.category === activeCategory
+    p => normalizeCategory(p.category) === activeCategory
   );
 
   const gridClasses = {
@@ -70,7 +78,7 @@ const ShopPage: React.FC = () => {
           ))}
         </div>
 
-        {/* Product Count */}
+        {/* Product Count + Grid Controls */}
         <div className="flex items-center justify-between mb-8">
           <p className="text-muted-foreground">
             <span className="font-bold text-foreground">
@@ -114,7 +122,15 @@ const ShopPage: React.FC = () => {
                 className="animate-fade-in"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <ProductCard {...product} />
+                <ProductCard
+                  id={product.id}
+                  title={product.name}
+                  price={product.price}
+                  imageUrls={product.imageUrls}
+                  category={product.category}
+                  isAvailable={product.isAvailable}
+                  stock={product.isAvailable ? 10 : 0} // Placeholder stock value
+                />
               </div>
             ))}
           </div>
@@ -131,6 +147,7 @@ const ShopPage: React.FC = () => {
             </div>
           </div>
         )}
+
       </div>
     </div>
   );

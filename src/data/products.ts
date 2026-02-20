@@ -10,6 +10,7 @@ export interface Product {
   name: string;
   price: number;
   image: string;
+  imageUrls?: string[]; // 🔥 matches Firestore
   category: ProductCategory;
   description?: string;
   isAvailable?: boolean;
