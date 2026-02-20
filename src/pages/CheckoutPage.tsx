@@ -7,39 +7,50 @@ import {
   CreditCard,
   Home,
   School,
+  Tag,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import {
+  addDoc,
+  collection,
+  serverTimestamp,
+  doc,
+  getDoc,
+} from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 type DeliveryOption = 'home' | 'college';
-
-const normalizeCartItems = (items: any[]) => {
-  return items.map((item) => ({
-    productId: item.id,
-    name: item.name ?? '',
-    price: item.price,
-    quantity: item.quantity ?? 1,
-    image: item.image ?? '',
-    size: item.size ?? null,
-  }));
-};
 
 const CREATE_ORDER_URL =
   'https://us-central1-inkvia-b31c1.cloudfunctions.net/createRazorpayOrder';
 const VERIFY_PAYMENT_URL =
   'https://us-central1-inkvia-b31c1.cloudfunctions.net/verifyPayment';
 
+const normalizeCartItems = (items: any[]) =>
+  items.map((item) => ({
+    productId: item.id,
+    name: item.title ?? '',
+    price: item.price,
+    quantity: item.quantity ?? 1,
+    image: item.image ?? '',
+    size: item.size ?? null,
+  }));
+
 const CheckoutPage: React.FC = () => {
   const { items, totalPrice, clearCart } = useCart();
   const navigate = useNavigate();
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deliveryOption, setDeliveryOption] =
     useState<DeliveryOption>('home');
+
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
+  const [couponDiscount, setCouponDiscount] = useState(0);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -52,22 +63,105 @@ const CheckoutPage: React.FC = () => {
     collegeAddress: 'VNRVJIET, Bachupally, Hyderabad',
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
+
+  /* =========================
+     COUPON VALIDATION
+  ========================= */
+
+  const handleApplyCoupon = async () => {
+  if (!couponCode.trim()) {
+    toast.error('Please enter a coupon code');
+    return;
+  }
+
+  try {
+    const couponRef = doc(db, 'coupons', couponCode.toUpperCase());
+    const snap = await getDoc(couponRef);
+
+    if (!snap.exists()) {
+      toast.error('Invalid coupon code');
+      return;
+    }
+
+    const data = snap.data();
+
+    if (!data.isActive) {
+      toast.error('Coupon inactive');
+      return;
+    }
+
+    if (data.expiryDate?.toDate() < new Date()) {
+      toast.error('Coupon expired');
+      return;
+    }
+
+    if (data.usageLimit && data.usedCount >= data.usageLimit) {
+      toast.error('Coupon usage limit reached');
+      return;
+    }
+
+    if (totalPrice < (data.minOrderAmount || 0)) {
+      toast.error(`Minimum order ₹${data.minOrderAmount} required`);
+      return;
+    }
+
+    let discount = 0;
+
+    if (data.type === 'percentage') {
+      discount = (totalPrice * data.value) / 100;
+      if (data.maxDiscount)
+        discount = Math.min(discount, data.maxDiscount);
+    } else {
+      discount = data.value;
+    }
+
+    setCouponDiscount(Math.floor(discount));
+    setAppliedCoupon(couponCode.toUpperCase());
+
+    toast.success('Coupon applied!');
+  } catch (err) {
+    toast.error('Failed to apply coupon');
+  }
+};
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+    setCouponDiscount(0);
+    toast.info('Coupon removed');
   };
 
-   const openRazorpay = async (orderId: string) => {
+  /* =========================
+     CALCULATIONS
+  ========================= */
+
+  const shippingCost =
+    deliveryOption === 'home' && totalPrice < 299 ? 50 : 0;
+
+  const finalTotal =
+    totalPrice + shippingCost - couponDiscount;
+
+  /* =========================
+     RAZORPAY
+  ========================= */
+
+  const openRazorpay = async (orderId: string) => {
     const res = await fetch(CREATE_ORDER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderId }),
+      body: JSON.stringify({
+        orderId,
+        amount: finalTotal,
+      }),
     });
 
     const razorpayOrder = await res.json();
 
     const options = {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-      amount: razorpayOrder.amount, // ✅ pre-filled
+      amount: razorpayOrder.amount,
       currency: 'INR',
       name: 'INKVIA',
       description: 'Order Payment',
@@ -90,7 +184,6 @@ const CheckoutPage: React.FC = () => {
 
       modal: {
         ondismiss: () => {
-          // ✅ USER CLOSED PAYMENT POPUP
           toast.info('Payment cancelled');
           setIsSubmitting(false);
         },
@@ -100,6 +193,10 @@ const CheckoutPage: React.FC = () => {
     const rzp = new (window as any).Razorpay(options);
     rzp.open();
   };
+
+  /* =========================
+     SUBMIT
+  ========================= */
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,19 +227,22 @@ const CheckoutPage: React.FC = () => {
               collegeAddress: formData.collegeAddress,
             };
 
-      const shippingCost = deliveryOption === 'home' && totalPrice < 299 ? 50 : 0;
-      const totalPriceWithShipping = totalPrice + shippingCost;
-      // 1️⃣ Create Firestore order (pending)
-      const orderRef = await addDoc(collection(db, 'orders'), {
-        items: normalizeCartItems(items),
-        totalAmount: totalPriceWithShipping,
-        deliveryOption,
-        deliveryDetails,
-        status: 'pending',
-        createdAt: serverTimestamp(),
-      });
+      const orderRef = await addDoc(
+        collection(db, 'orders'),
+        {
+          items: normalizeCartItems(items),
+          subtotal: totalPrice,
+          shippingCost,
+          discount: couponDiscount,
+          totalAmount: finalTotal,
+          couponCode: appliedCoupon || null,
+          deliveryOption,
+          deliveryDetails,
+          status: 'pending',
+          createdAt: serverTimestamp(),
+        }
+      );
 
-      // 2️⃣ Open Razorpay
       await openRazorpay(orderRef.id);
     } catch (err) {
       console.error(err);
@@ -226,9 +326,45 @@ const CheckoutPage: React.FC = () => {
                   <span className="sticker bg-comic-mint text-foreground text-xs py-1 px-2">FREE</span>
                 )}
               </div>
+              <div className="mt-4 pt-4 border-t-2 border-foreground/30">
+                <Label className="font-bold flex items-center gap-2 mb-2">
+                  <Tag className="w-4 h-4" />
+                  Coupon Code
+                </Label>
+                {appliedCoupon ? (
+                  <div className="flex items-center justify-between bg-comic-mint/30 border-2 border-foreground rounded-xl px-4 py-2">
+                    <span className="font-bold text-sm text-foreground">{appliedCoupon}</span>
+                    <button
+                      type="button"
+                      onClick={handleRemoveCoupon}
+                      className="text-destructive font-bold text-xs hover:underline"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Input
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      placeholder="Enter code"
+                      className="flex-1 border-2 border-foreground"
+                    />
+                    <Button
+                      type="button"
+                      variant="default"
+                      onClick={handleApplyCoupon}
+                      className="shrink-0"
+                    >
+                      Apply
+                    </Button>
+                  </div>
+                )}
+              </div>
+              
               <div className="flex items-center justify-between text-xl font-bold mt-4 pt-4 border-t-2 border-foreground">
                 <span>Total</span>
-                <span className="font-comic text-2xl text-primary">₹{totalPrice.toLocaleString()}</span>
+                <span className="font-comic text-2xl text-primary">₹{finalTotal.toLocaleString()}</span>
               </div>
             </div>
           </div>
