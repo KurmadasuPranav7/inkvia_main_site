@@ -25,16 +25,8 @@ const ShopPage: React.FC = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  // 🔥 Normalize category in case Firestore has "poster" instead of "posters"
-  const normalizeCategory = (category: string): ProductCategory => {
-    if (category === 'poster') return 'posters';
-    if (category === 'sticker') return 'stickers';
-    if (category === 'merch') return 'merch';
-    return category as ProductCategory;
-  };
-
   const filteredProducts = products.filter(
-    p => normalizeCategory(p.category) === activeCategory
+    (p) => p.category === activeCategory
   );
 
   const gridClasses = {
@@ -47,7 +39,6 @@ const ShopPage: React.FC = () => {
     <div className="min-h-screen pt-8 pb-16 bg-background">
       <div className="container mx-auto px-4 lg:px-8">
 
-        {/* Header */}
         <div className="text-center mb-12 lg:mb-16 animate-slide-up">
           <div className="inline-block sticker bg-comic-red text-white mb-6">
             Shop Collection 🛒
@@ -56,13 +47,12 @@ const ShopPage: React.FC = () => {
             INKVIA Store
           </h1>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Premium designs crafted to inspire. Limited edition drops you won't find anywhere else.
+            Premium designs crafted to inspire.
           </p>
         </div>
 
-        {/* Category Tabs */}
         <div className="flex flex-wrap justify-center gap-3 mb-8">
-          {categories.map(cat => (
+          {categories.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
@@ -78,42 +68,12 @@ const ShopPage: React.FC = () => {
           ))}
         </div>
 
-        {/* Product Count + Grid Controls */}
-        <div className="flex items-center justify-between mb-8">
-          <p className="text-muted-foreground">
-            <span className="font-bold text-foreground">
-              {filteredProducts.length}
-            </span>{' '}
-            products
-          </p>
-
-          <div className="flex items-center gap-2 bg-card border-2 border-foreground rounded-xl p-1 shadow-comic-sm">
-            {[2, 3, 4].map(n => (
-              <button
-                key={n}
-                onClick={() => setGridLayout(n as GridLayout)}
-                className={`p-2 rounded-lg ${
-                  gridLayout === n
-                    ? 'bg-comic-yellow'
-                    : 'text-muted-foreground hover:bg-secondary'
-                }`}
-              >
-                {n === 2 && <Grid2X2 />}
-                {n === 3 && <Grid3X3 />}
-                {n === 4 && <LayoutGrid />}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Loading */}
         {loading && (
           <p className="text-center py-16 text-muted-foreground">
             Loading products…
           </p>
         )}
 
-        {/* Product Grid */}
         {!loading && (
           <div className={`grid ${gridClasses[gridLayout]} gap-6 lg:gap-8`}>
             {filteredProducts.map((product, index) => (
@@ -129,14 +89,13 @@ const ShopPage: React.FC = () => {
                   imageUrls={product.imageUrls}
                   category={product.category}
                   isAvailable={product.isAvailable}
-                  stock={product.isAvailable ? 10 : 0} // Placeholder stock value
+                  stock={product.isAvailable ? 10 : 0}
                 />
               </div>
             ))}
           </div>
         )}
 
-        {/* Empty State */}
         {!loading && filteredProducts.length === 0 && (
           <div className="text-center py-16">
             <div className="comic-panel inline-block bg-comic-yellow p-8">
@@ -147,7 +106,6 @@ const ShopPage: React.FC = () => {
             </div>
           </div>
         )}
-
       </div>
     </div>
   );
