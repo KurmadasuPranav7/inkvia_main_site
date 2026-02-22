@@ -18,18 +18,18 @@ interface Slide {
 const slides: Slide[] = [
   {
     id: 1,
-    headline: 'INKVIA — Where Creativity Becomes Culture',
-    subtext: 'Posters, Stickers, Clothing & Creative Media',
-    accentColor: 'blue',
-    bgStyle: 'bg-gradient-to-br from-comic-blue/20 via-background to-comic-mint/20',
-  },
-  {
-    id: 2,
     headline: 'First Drop is Live',
     subtext: 'A4 Wall Posters – Limited Edition',
     cta: { text: 'Shop Now', link: '/shop' },
     accentColor: 'yellow',
     bgStyle: 'bg-gradient-to-br from-comic-yellow/30 via-background to-comic-red/20',
+  },
+  {
+    id: 2,
+    headline: 'INKVIA — Where Creativity Becomes Culture',
+    subtext: 'Posters, Stickers, Clothing & Creative Media',
+    accentColor: 'blue',
+    bgStyle: 'bg-gradient-to-br from-comic-blue/20 via-background to-comic-mint/20',
   },
   {
     id: 3,
@@ -99,7 +99,7 @@ const HeroCarousel: React.FC = () => {
       <div className="absolute top-1/4 right-20 w-16 h-16 bg-comic-yellow rounded-lg border-4 border-foreground opacity-80 animate-float-delayed rotate-12 shadow-comic flex items-center justify-center">
         <span className="text-xl">⚡</span>
       </div>
-      <div className="absolute bottom-20 left-1/4 w-24 h-24 bg-comic-mint rounded-2xl border-4 border-foreground opacity-60 animate-float rotate-[-8deg] shadow-comic flex items-center justify-center">
+      <div className="absolute bottom-16 left-1/4 w-24 h-24 bg-comic-mint rounded-2xl border-4 border-foreground opacity-60 animate-float rotate-[-8deg] shadow-comic flex items-center justify-center">
         <span className="text-3xl">🎨</span>
       </div>
       <div className="hidden md:flex absolute bottom-1/3 right-1/4 w-12 h-12 bg-comic-blue rounded-full border-4 border-foreground opacity-70 animate-float-delayed shadow-comic flex items-center justify-center">

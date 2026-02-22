@@ -49,6 +49,9 @@ const ShopPage: React.FC = () => {
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Premium designs crafted to inspire.
           </p>
+          <h2 className="font-comic text-2xl md:text-2xl lg:text-4xl mb-4 pt-3 text-comic-blue">
+            Buy 3 Posters and Get Free Delivery !
+          </h2>
         </div>
 
         <div className="flex flex-wrap justify-center gap-3 mb-8">

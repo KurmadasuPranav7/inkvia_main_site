@@ -26,9 +26,9 @@ import { db } from '@/lib/firebase';
 type DeliveryOption = 'home' | 'college';
 
 const CREATE_ORDER_URL =
-  'https://us-central1-inkvia-b31c1.cloudfunctions.net/createRazorpayOrder';
+  'https://asia-south1-inkvia-b31c1.cloudfunctions.net/createRazorpayOrder';
 const VERIFY_PAYMENT_URL =
-  'https://us-central1-inkvia-b31c1.cloudfunctions.net/verifyPayment';
+  'https://asia-south1-inkvia-b31c1.cloudfunctions.net/verifyPayment';
 
 const normalizeCartItems = (items: any[]) =>
   items.map((item) => ({
@@ -138,7 +138,7 @@ const CheckoutPage: React.FC = () => {
   ========================= */
 
   const shippingCost =
-    deliveryOption === 'home' && totalPrice < 299 ? 50 : 0;
+    deliveryOption === 'home' && totalPrice < 255 ? 50 : 0;
 
   const finalTotal =
     totalPrice + shippingCost - couponDiscount;
@@ -320,7 +320,7 @@ const CheckoutPage: React.FC = () => {
               </div>
               <div className="flex items-center justify-between text-sm mt-2">
                 <span className="text-foreground/80">Shipping</span>
-                {(deliveryOption === 'home' && totalPrice < 299) ? (
+                {(deliveryOption === 'home' && totalPrice < 255) ? (
                   <span className="sticker bg-comic-red text-foreground text-xs py-1 px-2">₹50</span>
                 ) :( 
                   <span className="sticker bg-comic-mint text-foreground text-xs py-1 px-2">FREE</span>
