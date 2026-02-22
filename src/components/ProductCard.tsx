@@ -75,13 +75,13 @@ const ProductCard: React.FC<ProductCardProps> = ({
           </Button>
         </div>
 
-        {category && (
+        {/* {category && (
           <div className="absolute top-4 left-4">
             <span className="sticker bg-comic-mint text-foreground text-xs">
               {category}
             </span>
           </div>
-        )}
+        )} */}
       </div>
 
       <div className="p-4 border-t-2 border-foreground">
