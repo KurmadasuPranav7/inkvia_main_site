@@ -8,6 +8,7 @@ const { defineSecret } = require('firebase-functions/params');
 admin.initializeApp();
 const db = admin.firestore();
 
+// 🔐 Secrets
 const RAZORPAY_KEY_ID = defineSecret('RAZORPAY_KEY_ID');
 const RAZORPAY_KEY_SECRET = defineSecret('RAZORPAY_KEY_SECRET');
 
@@ -16,8 +17,9 @@ const RAZORPAY_KEY_SECRET = defineSecret('RAZORPAY_KEY_SECRET');
  */
 exports.createRazorpayOrder = onRequest(
   {
+    region: 'asia-south1',
     secrets: [RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET],
-    cors: true, // ✅ THIS LINE FIXES CORS
+    cors: true,
   },
   async (req, res) => {
     try {
@@ -31,6 +33,7 @@ exports.createRazorpayOrder = onRequest(
       }
 
       const orderDoc = await db.collection('orders').doc(orderId).get();
+
       if (!orderDoc.exists) {
         return res.status(404).json({ error: 'Order not found' });
       }
@@ -43,24 +46,27 @@ exports.createRazorpayOrder = onRequest(
       });
 
       const razorpayOrder = await razorpay.orders.create({
-        amount: totalAmount * 100,
+        amount: totalAmount * 100, // convert to paise
         currency: 'INR',
         receipt: orderId,
       });
 
       res.json(razorpayOrder);
+
     } catch (err) {
-      console.error(err);
+      console.error('Create Order Error:', err);
       res.status(500).json({ error: 'Failed to create Razorpay order' });
     }
   }
 );
+
 
 /**
  * VERIFY PAYMENT
  */
 exports.verifyPayment = onRequest(
   {
+    region: 'asia-south1',
     secrets: [RAZORPAY_KEY_SECRET],
     cors: true,
   },
@@ -77,6 +83,10 @@ exports.verifyPayment = onRequest(
         receipt,
       } = req.body;
 
+      if (!receipt) {
+        return res.status(400).json({ error: 'receipt required' });
+      }
+
       const body = razorpay_order_id + '|' + razorpay_payment_id;
 
       const expectedSignature = crypto
@@ -85,66 +95,21 @@ exports.verifyPayment = onRequest(
         .digest('hex');
 
       if (expectedSignature !== razorpay_signature) {
-        return res.status(400).json({ status: 'failed' });
+        return res.status(400).json({ status: 'failed', message: 'Invalid signature' });
       }
 
       const orderRef = db.collection('orders').doc(receipt);
-      const orderDoc = await orderRef.get();
 
-      if (!orderDoc.exists) {
-        return res.status(404).json({ error: 'Order not found' });
-      }
-
-      const orderData = orderDoc.data();
-      const couponCode = orderData.couponCode;
-
-      await db.runTransaction(async (transaction) => {
-        // 1️⃣ Update Order to Paid
-        transaction.update(orderRef, {
-          status: 'paid',
-          paymentId: razorpay_payment_id,
-          paidAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
-
-        // 2️⃣ If Coupon Exists → Validate & Increment
-        if (couponCode) {
-          const couponRef = db.collection('coupons').doc(couponCode);
-          const couponSnap = await transaction.get(couponRef);
-
-          if (!couponSnap.exists) {
-            throw new Error('Coupon not found');
-          }
-
-          const couponData = couponSnap.data();
-
-          // Check usage limit again (important for safety)
-          if (
-            couponData.usageLimit &&
-            couponData.usedCount >= couponData.usageLimit
-          ) {
-            throw new Error('Coupon usage exceeded');
-          }
-
-          // Increment usedCount
-          transaction.update(couponRef, {
-            usedCount: admin.firestore.FieldValue.increment(1),
-          });
-
-          // Optional: auto-disable coupon when limit reached
-          if (
-            couponData.usageLimit &&
-            couponData.usedCount + 1 >= couponData.usageLimit
-          ) {
-            transaction.update(couponRef, {
-              isActive: false,
-            });
-          }
-        }
+      await orderRef.update({
+        status: 'paid',
+        paymentId: razorpay_payment_id,
+        paidAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
       res.json({ status: 'success' });
+
     } catch (err) {
-      console.error(err);
+      console.error('Verify Payment Error:', err);
       res.status(500).json({ error: 'Verification failed' });
     }
   }

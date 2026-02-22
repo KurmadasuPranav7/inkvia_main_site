@@ -77,7 +77,7 @@ const Footer: React.FC = () => {
 
         <div className="mt-12 pt-8 border-t border-primary/10 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
-            © 2025 INKVIA. All rights reserved.
+            © 2026 INKVIA. All rights reserved.
           </p>
           <p className="text-sm text-muted-foreground">
             Made by team at Inkvia
