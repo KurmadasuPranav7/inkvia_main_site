@@ -96,10 +96,10 @@ const HeroCarousel: React.FC = () => {
       <div className="absolute top-10 left-10 w-20 h-20 bg-comic-red rounded-full border-4 border-foreground opacity-70 animate-float shadow-comic flex items-center justify-center">
         <span className="text-2xl">💥</span>
       </div>
-      <div className="absolute top-1/4 right-20 w-16 h-16 bg-comic-yellow rounded-lg border-4 border-foreground opacity-80 animate-float-delayed rotate-12 shadow-comic flex items-center justify-center">
+      <div className="hidden md:flex absolute top-1/4 right-20 w-16 h-16 bg-comic-yellow rounded-lg border-4 border-foreground opacity-80 animate-float-delayed rotate-12 shadow-comic flex items-center justify-center">
         <span className="text-xl">⚡</span>
       </div>
-      <div className="absolute bottom-16 left-1/4 w-24 h-24 bg-comic-mint rounded-2xl border-4 border-foreground opacity-60 animate-float rotate-[-8deg] shadow-comic flex items-center justify-center">
+      <div className="hidden md:flex absolute bottom-16 left-1/4 w-24 h-24 bg-comic-mint rounded-2xl border-4 border-foreground opacity-60 animate-float rotate-[-8deg] shadow-comic flex items-center justify-center">
         <span className="text-3xl">🎨</span>
       </div>
       <div className="hidden md:flex absolute bottom-1/3 right-1/4 w-12 h-12 bg-comic-blue rounded-full border-4 border-foreground opacity-70 animate-float-delayed shadow-comic flex items-center justify-center">
